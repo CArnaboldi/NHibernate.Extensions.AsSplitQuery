@@ -632,6 +632,514 @@ public class AsSplitQueryIntegrationTests : IDisposable
         }
     }
 
+    #region Single Entity Query Methods Tests
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with FirstAsync() and loads nested collections.
+    /// </summary>
+    [Fact]
+    public async Task AsSplitQuery_WithFirstAsync_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order = new TestOrder { Code = "ORD001" };
+            var phase1 = new TestPhase { Name = "Phase1", Order = order };
+            var phase2 = new TestPhase { Name = "Phase2", Order = order };
+            var downtime1 = new TestDowntime { Reason = "Breakdown", Phase = phase1 };
+            var downtime2 = new TestDowntime { Reason = "Maintenance", Phase = phase2 };
+            
+            phase1.Downtimes.Add(downtime1);
+            phase2.Downtimes.Add(downtime2);
+            order.Phases.Add(phase1);
+            order.Phases.Add(phase2);
+
+            await session.SaveAsync(order);
+            await transaction.CommitAsync();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = await session.Query<TestOrder>()
+                .FetchMany(o => o.Phases)
+                .ThenFetchMany(p => p.Downtimes)
+                .AsSplitQuery()
+                .FirstAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Code.Should().Be("ORD001");
+            result.Phases.Should().HaveCount(2);
+            result.Phases.SelectMany(p => p.Downtimes).Should().HaveCount(2);
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with FirstOrDefaultAsync() and loads nested collections.
+    /// </summary>
+    [Fact]
+    public async Task AsSplitQuery_WithFirstOrDefaultAsync_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order = new TestOrder { Code = "ORD001" };
+            var phase = new TestPhase { Name = "Phase1", Order = order };
+            var downtime = new TestDowntime { Reason = "Breakdown", Phase = phase };
+            
+            phase.Downtimes.Add(downtime);
+            order.Phases.Add(phase);
+
+            await session.SaveAsync(order);
+            await transaction.CommitAsync();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = await session.Query<TestOrder>()
+                .Where(o => o.Code == "ORD001")
+                .FetchMany(o => o.Phases)
+                .ThenFetchMany(p => p.Downtimes)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Phases.Should().HaveCount(1);
+            result.Phases.First().Downtimes.Should().HaveCount(1);
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery with FirstOrDefaultAsync() returns null when no results found.
+    /// </summary>
+    [Fact]
+    public async Task AsSplitQuery_WithFirstOrDefaultAsync_ShouldReturnNull_WhenNoResults()
+    {
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = await session.Query<TestOrder>()
+                .Where(o => o.Code == "NONEXISTENT")
+                .FetchMany(o => o.Phases)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync();
+
+            // Assert
+            result.Should().BeNull();
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with SingleAsync() and loads nested collections.
+    /// </summary>
+    [Fact]
+    public async Task AsSplitQuery_WithSingleAsync_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order = new TestOrder { Code = "ORD001" };
+            var phase1 = new TestPhase { Name = "Phase1", Order = order };
+            var phase2 = new TestPhase { Name = "Phase2", Order = order };
+            
+            order.Phases.Add(phase1);
+            order.Phases.Add(phase2);
+
+            await session.SaveAsync(order);
+            await transaction.CommitAsync();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = await session.Query<TestOrder>()
+                .Where(o => o.Code == "ORD001")
+                .FetchMany(o => o.Phases)
+                .AsSplitQuery()
+                .SingleAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Phases.Should().HaveCount(2);
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with SingleOrDefaultAsync() and loads nested collections.
+    /// </summary>
+    [Fact]
+    public async Task AsSplitQuery_WithSingleOrDefaultAsync_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order = new TestOrder { Code = "ORD001" };
+            var phase = new TestPhase { Name = "Phase1", Order = order };
+            var downtime = new TestDowntime { Reason = "Breakdown", Phase = phase };
+            
+            phase.Downtimes.Add(downtime);
+            order.Phases.Add(phase);
+
+            await session.SaveAsync(order);
+            await transaction.CommitAsync();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = await session.Query<TestOrder>()
+                .Where(o => o.Code == "ORD001")
+                .FetchMany(o => o.Phases)
+                .ThenFetchMany(p => p.Downtimes)
+                .AsSplitQuery()
+                .SingleOrDefaultAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Phases.Should().HaveCount(1);
+            result.Phases.First().Downtimes.Should().HaveCount(1);
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery with SingleOrDefaultAsync() returns null when no results found.
+    /// </summary>
+    [Fact]
+    public async Task AsSplitQuery_WithSingleOrDefaultAsync_ShouldReturnNull_WhenNoResults()
+    {
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = await session.Query<TestOrder>()
+                .Where(o => o.Code == "NONEXISTENT")
+                .FetchMany(o => o.Phases)
+                .AsSplitQuery()
+                .SingleOrDefaultAsync();
+
+            // Assert
+            result.Should().BeNull();
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with synchronous First() and loads nested collections.
+    /// </summary>
+    [Fact]
+    public void AsSplitQuery_WithFirst_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order = new TestOrder { Code = "ORD001" };
+            var phase1 = new TestPhase { Name = "Phase1", Order = order };
+            var phase2 = new TestPhase { Name = "Phase2", Order = order };
+            
+            order.Phases.Add(phase1);
+            order.Phases.Add(phase2);
+
+            session.Save(order);
+            transaction.Commit();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = session.Query<TestOrder>()
+                .FetchMany(o => o.Phases)
+                .AsSplitQuery()
+                .First();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Phases.Should().HaveCount(2);
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with synchronous FirstOrDefault() and loads nested collections.
+    /// </summary>
+    [Fact]
+    public void AsSplitQuery_WithFirstOrDefault_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order = new TestOrder { Code = "ORD001" };
+            var phase = new TestPhase { Name = "Phase1", Order = order };
+            
+            order.Phases.Add(phase);
+
+            session.Save(order);
+            transaction.Commit();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = session.Query<TestOrder>()
+                .Where(o => o.Code == "ORD001")
+                .FetchMany(o => o.Phases)
+                .AsSplitQuery()
+                .FirstOrDefault();
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Phases.Should().HaveCount(1);
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with synchronous Single() and loads nested collections.
+    /// </summary>
+    [Fact]
+    public void AsSplitQuery_WithSingle_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order = new TestOrder { Code = "ORD001" };
+            var phase = new TestPhase { Name = "Phase1", Order = order };
+            
+            order.Phases.Add(phase);
+
+            session.Save(order);
+            transaction.Commit();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = session.Query<TestOrder>()
+                .Where(o => o.Code == "ORD001")
+                .FetchMany(o => o.Phases)
+                .AsSplitQuery()
+                .Single();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Phases.Should().HaveCount(1);
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with synchronous SingleOrDefault() and loads nested collections.
+    /// </summary>
+    [Fact]
+    public void AsSplitQuery_WithSingleOrDefault_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order = new TestOrder { Code = "ORD001" };
+            var phase1 = new TestPhase { Name = "Phase1", Order = order };
+            var phase2 = new TestPhase { Name = "Phase2", Order = order };
+            
+            order.Phases.Add(phase1);
+            order.Phases.Add(phase2);
+
+            session.Save(order);
+            transaction.Commit();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = session.Query<TestOrder>()
+                .Where(o => o.Code == "ORD001")
+                .FetchMany(o => o.Phases)
+                .AsSplitQuery()
+                .SingleOrDefault();
+
+            // Assert
+            result.Should().NotBeNull();
+            result!.Phases.Should().HaveCount(2);
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery with single entity methods works with multiple fetch paths.
+    /// </summary>
+    [Fact]
+    public async Task AsSplitQuery_WithFirstAsync_ShouldLoadMultipleFetchPaths()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order = new TestOrder { Code = "ORD001" };
+            
+            var phase1 = new TestPhase { Name = "Phase1", Order = order };
+            var phase2 = new TestPhase { Name = "Phase2", Order = order };
+            
+            var downtime1 = new TestDowntime { Reason = "Breakdown1", Phase = phase1 };
+            var downtime2 = new TestDowntime { Reason = "Breakdown2", Phase = phase1 };
+            var downtime3 = new TestDowntime { Reason = "Breakdown3", Phase = phase2 };
+            
+            phase1.Downtimes.Add(downtime1);
+            phase1.Downtimes.Add(downtime2);
+            phase2.Downtimes.Add(downtime3);
+            
+            order.Phases.Add(phase1);
+            order.Phases.Add(phase2);
+
+            await session.SaveAsync(order);
+            await transaction.CommitAsync();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var result = await session.Query<TestOrder>()
+                .FetchMany(o => o.Phases)
+                .ThenFetchMany(p => p.Downtimes)
+                .AsSplitQuery()
+                .FirstAsync();
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Phases.Should().HaveCount(2);
+            
+            var phase1 = result.Phases.FirstOrDefault(p => p.Name == "Phase1");
+            var phase2 = result.Phases.FirstOrDefault(p => p.Name == "Phase2");
+            
+            phase1.Should().NotBeNull();
+            phase2.Should().NotBeNull();
+            
+            phase1!.Downtimes.Should().HaveCount(2);
+            phase2!.Downtimes.Should().HaveCount(1);
+        }
+    }
+
+    #endregion
+
+    #region Collection Query Methods Tests
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with synchronous ToList() and loads nested collections.
+    /// </summary>
+    [Fact]
+    public void AsSplitQuery_WithToList_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order1 = new TestOrder { Code = "ORD001" };
+            var order2 = new TestOrder { Code = "ORD002" };
+            
+            var phase1 = new TestPhase { Name = "Phase1", Order = order1 };
+            var phase2 = new TestPhase { Name = "Phase2", Order = order2 };
+            
+            var downtime1 = new TestDowntime { Reason = "Breakdown1", Phase = phase1 };
+            var downtime2 = new TestDowntime { Reason = "Breakdown2", Phase = phase2 };
+            
+            phase1.Downtimes.Add(downtime1);
+            phase2.Downtimes.Add(downtime2);
+            order1.Phases.Add(phase1);
+            order2.Phases.Add(phase2);
+
+            session.Save(order1);
+            session.Save(order2);
+            transaction.Commit();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var results = session.Query<TestOrder>()
+                .FetchMany(o => o.Phases)
+                .ThenFetchMany(p => p.Downtimes)
+                .AsSplitQuery()
+                .ToList();
+
+            // Assert
+            results.Should().HaveCount(2);
+            results.Should().OnlyContain(o => o.Phases.Count == 1);
+            results.SelectMany(o => o.Phases).Should().OnlyContain(p => p.Downtimes.Count == 1);
+        }
+    }
+
+    /// <summary>
+    /// Tests that AsSplitQuery works correctly with async ToListAsync() and loads nested collections with multiple orders.
+    /// </summary>
+    [Fact]
+    public async Task AsSplitQuery_WithToListAsync_ShouldLoadNestedCollections()
+    {
+        // Arrange
+        using (var session = _sessionFactory.OpenSession())
+        using (var transaction = session.BeginTransaction())
+        {
+            var order1 = new TestOrder { Code = "ORD001" };
+            var order2 = new TestOrder { Code = "ORD002" };
+            var order3 = new TestOrder { Code = "ORD003" };
+            
+            var phase1 = new TestPhase { Name = "Phase1", Order = order1 };
+            var phase2 = new TestPhase { Name = "Phase2", Order = order1 };
+            var phase3 = new TestPhase { Name = "Phase3", Order = order2 };
+            var phase4 = new TestPhase { Name = "Phase4", Order = order3 };
+            
+            var downtime1 = new TestDowntime { Reason = "Breakdown1", Phase = phase1 };
+            var downtime2 = new TestDowntime { Reason = "Breakdown2", Phase = phase2 };
+            var downtime3 = new TestDowntime { Reason = "Breakdown3", Phase = phase3 };
+            
+            phase1.Downtimes.Add(downtime1);
+            phase2.Downtimes.Add(downtime2);
+            phase3.Downtimes.Add(downtime3);
+            
+            order1.Phases.Add(phase1);
+            order1.Phases.Add(phase2);
+            order2.Phases.Add(phase3);
+            order3.Phases.Add(phase4);
+
+            await session.SaveAsync(order1);
+            await session.SaveAsync(order2);
+            await session.SaveAsync(order3);
+            await transaction.CommitAsync();
+        }
+
+        // Act
+        using (var session = _sessionFactory.OpenSession())
+        {
+            var results = await session.Query<TestOrder>()
+                .FetchMany(o => o.Phases)
+                .ThenFetchMany(p => p.Downtimes)
+                .AsSplitQuery()
+                .ToListAsync();
+
+            // Assert
+            results.Should().HaveCount(3);
+            
+            var order1 = results.FirstOrDefault(o => o.Code == "ORD001");
+            var order2 = results.FirstOrDefault(o => o.Code == "ORD002");
+            var order3 = results.FirstOrDefault(o => o.Code == "ORD003");
+            
+            order1.Should().NotBeNull();
+            order2.Should().NotBeNull();
+            order3.Should().NotBeNull();
+            
+            order1!.Phases.Should().HaveCount(2);
+            order2!.Phases.Should().HaveCount(1);
+            order3!.Phases.Should().HaveCount(1);
+            
+            order1.Phases.SelectMany(p => p.Downtimes).Should().HaveCount(2);
+            order2.Phases.SelectMany(p => p.Downtimes).Should().HaveCount(1);
+            order3.Phases.SelectMany(p => p.Downtimes).Should().BeEmpty();
+        }
+    }
+
+    #endregion
+
     public void Dispose()
     {
         _sessionFactory?.Dispose();

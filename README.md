@@ -14,9 +14,10 @@ Similar to Entity Framework Core's `AsSplitQuery()`, this library provides an ex
 - ? **EF Core-like API** - Familiar `AsSplitQuery()` syntax
 - ? **50-100x Performance Improvement** - Dramatically faster queries with nested collections
 - ? **Thread-Safe** - Concurrent execution with reflection caching
-- ? **Full Async Support** - Works with `ToListAsync()`, `FirstAsync()`, etc.
+- ? **Full Async Support** - Works with `ToListAsync()`, `FirstAsync()`, `SingleAsync()`, etc.
 - ? **Automatic Collection Hydration** - Collections are properly initialized
 - ? **LINQ Integration** - Works with `Where()`, `OrderBy()`, `Skip()`, `Take()`, etc.
+- ? **Single Entity Support** - Works with `First()`, `FirstOrDefault()`, `Single()`, `SingleOrDefault()` and their async variants
 
 ## ?? Installation
 
@@ -73,6 +74,26 @@ var recentOrders = await session.Query<Order>()
     .ToListAsync();
 ```
 
+### Single Entity Queries
+
+```csharp
+// Works with FirstAsync() and loads all nested collections
+var customer = await session.Query<Customer>()
+    .Where(c => c.Id == customerId)
+    .FetchMany(c => c.Orders)
+    .ThenFetchMany(o => o.OrderItems)
+    .FetchMany(c => c.Addresses)
+    .AsSplitQuery()
+    .FirstAsync();
+
+// Also works with Single, FirstOrDefault, SingleOrDefault and their async variants
+var order = await session.Query<Order>()
+    .Where(o => o.Code == "ORD001")
+    .FetchMany(o => o.OrderItems)
+    .AsSplitQuery()
+    .SingleOrDefaultAsync();
+```
+
 ### Multiple Collections
 
 ```csharp
@@ -81,14 +102,14 @@ var customer = await session.Query<Customer>()
     .ThenFetchMany(o => o.OrderItems)
     .FetchMany(c => c.Addresses)
     .AsSplitQuery()
-    .FirstAsync();
+    .ToListAsync();
 ```
 
 ## ?? How It Works
 
 1. **Analyzes** the LINQ expression tree to find all `FetchMany` and `ThenFetchMany` operations
 2. **Strips** fetch operations from the main query
-3. **Executes** the main query to get primary entities
+3. **Executes** the main query to get primary entities (collection or single entity)
 4. **Executes** separate queries for each collection level using `WHERE IN` clauses
 5. **Hydrates** collections manually and marks them as initialized
 6. **Prevents** lazy loading with proper NHibernate session management
@@ -122,19 +143,9 @@ using NHibernate.Extensions.AsSplitQuery;
 
 ## ?? Limitations
 
-1. **FirstAsync() limitation**: Works best with `ToListAsync()`. Using `FirstAsync()` may not load all nested collections.
-   ```csharp
-   // ? Not recommended
-   var order = await query.AsSplitQuery().FirstAsync();
-   
-   // ? Recommended workaround
-   var orders = await query.AsSplitQuery().ToListAsync();
-   var order = orders.FirstOrDefault();
-   ```
+1. **Composite Keys**: Composite foreign keys are not currently supported.
 
-2. **Composite Keys**: Composite foreign keys are not currently supported.
-
-3. **Transactions**: Works seamlessly within transactions - no special handling needed.
+2. **Transactions**: Works seamlessly within transactions - no special handling needed.
 
 ## ?? Testing
 
@@ -150,6 +161,7 @@ dotnet test
 - ? Nested collections (ThenFetchMany)
 - ? Multiple fetch paths
 - ? LINQ operations (Where, OrderBy, Skip, Take)
+- ? Single entity queries (First, FirstOrDefault, Single, SingleOrDefault, and async variants)
 - ? Empty collections
 - ? Transaction safety
 - ? Dirty checking
@@ -177,9 +189,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## ?? Support
 
-- ?? [Report a bug](https://github.com/Trim-Informatica/NHibernate.Extensions.AsSplitQuery/issues)
-- ?? [Request a feature](https://github.com/Trim-Informatica/NHibernate.Extensions.AsSplitQuery/issues)
-- ?? [Documentation](https://github.com/Trim-Informatica/NHibernate.Extensions.AsSplitQuery/wiki)
+- ?? [Report a bug](https://github.com/CArnaboldi/NHibernate.Extensions.AsSplitQuery/issues)
+- ?? [Request a feature](https://github.com/CArnaboldi/NHibernate.Extensions.AsSplitQuery/issues)
+- ?? [Documentation](https://github.com/CArnaboldi/NHibernate.Extensions.AsSplitQuery/wiki)
 
 ## ?? Star History
 
@@ -187,4 +199,4 @@ If this library helped you, please ? star the repository!
 
 ---
 
-Made with ?? by [Trim Informatica](https://github.com/Trim-Informatica)
+Made by [CArnaboldi](https://github.com/CArnaboldi)

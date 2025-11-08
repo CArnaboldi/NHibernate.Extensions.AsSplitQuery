@@ -4,19 +4,54 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Title>NHibernate.Extensions.AsSplitQuery</Title>
-    <Description>Extension for NHibernate that provides AsSplitQuery functionality similar to Entity Framework Core, preventing cartesian explosion when eager loading multiple collections.</Description>
+    <LangVersion>13.0</LangVersion>
+    
+    <!-- Package Metadata -->
+    <PackageId>NHibernate.Extensions.AsSplitQuery</PackageId>
+    <Version>1.0.0</Version>
     <Authors>CArnaboldi</Authors>
+    <Company>CArnaboldi</Company>
+    <Product>NHibernate.Extensions.AsSplitQuery</Product>
+    <Title>NHibernate AsSplitQuery Extension</Title>
+    <Description>Prevent cartesian explosion in NHibernate LINQ queries when eager loading multiple collections. Similar to Entity Framework Core's AsSplitQuery(), this library splits collection loading into separate database queries for 50-100x performance improvement. Works with FetchMany, ThenFetchMany, and all LINQ operators including First, Single, ToList and their async variants.</Description>
+    <Copyright>Copyright © 2025 CArnaboldi</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    
+    <!-- URLs -->
     <PackageProjectUrl>https://github.com/CArnaboldi/NHibernate.Extensions.AsSplitQuery</PackageProjectUrl>
     <RepositoryUrl>https://github.com/CArnaboldi/NHibernate.Extensions.AsSplitQuery</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageTags>nhibernate;split-query;linq;orm;performance</PackageTags>
-    <Version>1.0.0</Version>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    
+    <!-- Package Settings -->
+    <PackageTags>nhibernate;split-query;linq;orm;performance;eager-loading;fetch;cartesian;optimization</PackageTags>
+    <PackageReleaseNotes>Initial release with support for split queries on all query methods (ToList, First, Single, and async variants). Prevents cartesian explosion when eager loading multiple collections.</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    
+    <!-- Symbol Package Settings -->
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedAllSources>true</EmbedAllSources>
+    
+    <!-- Documentation -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn><!-- Disable missing XML comment warnings -->
+    
+    <!-- Source Link (for debugging) -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NHibernate" Version="5.5.2" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

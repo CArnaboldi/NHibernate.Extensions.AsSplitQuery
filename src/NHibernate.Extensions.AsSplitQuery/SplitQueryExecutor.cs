@@ -47,9 +47,17 @@ internal class SplitQueryExecutor
         var rootExpression = _expressionRewriter.StripFetchOperations(expression);
         var rootResult = _underlyingProvider.Execute(rootExpression);
 
-        return _isCollection(rootResult) 
-            ? _executeSplitQueryForCollection(rootResult, expression, allFetchPaths)
-            : rootResult; // Single entity - can't optimize efficiently
+        if (_isCollection(rootResult))
+        {
+            return _executeSplitQueryForCollection(rootResult, expression, allFetchPaths);
+        }
+        else if (rootResult != null)
+        {
+            // Handle single entity results (First, Single, etc.)
+            return _executeSplitQueryForSingleEntity(rootResult, allFetchPaths);
+        }
+        
+        return rootResult;
     }
 
     private bool _isCollection(object result) => result is IEnumerable;
@@ -68,6 +76,19 @@ internal class SplitQueryExecutor
         _processAllFetchLevels(fetchLevels, rootResults, processedEntities, sessionImpl);
         
         return _createTypedEnumerable(rootResults, rootResults[0].GetType());
+    }
+
+    private object _executeSplitQueryForSingleEntity(object entity, List<FetchPath> fetchPaths)
+    {
+        var sessionImpl = (ISessionImplementor)_session;
+        var rootResults = new List<object> { entity };
+        
+        var processedEntities = _initializeProcessedEntities(rootResults, sessionImpl);
+        var fetchLevels = _fetchPathOrganizer.OrganizeByLevel(fetchPaths);
+        
+        _processAllFetchLevels(fetchLevels, rootResults, processedEntities, sessionImpl);
+        
+        return entity;
     }
 
     private List<object> _convertToObjectList(object enumerable)

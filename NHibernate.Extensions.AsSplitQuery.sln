@@ -11,6 +11,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NHibernate.Extensions.AsSplitQuery.Tests", "tests\NHibernate.Extensions.AsSplitQuery.Tests\NHibernate.Extensions.AsSplitQuery.Tests.csproj", "{31608749-45FB-4E6E-8F24-FA6DBBCFB08D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "documentation", "documentation", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		docs\BUILD_AND_PUBLISH.md = docs\BUILD_AND_PUBLISH.md
+		docs\CHANGELOG.md = docs\CHANGELOG.md
+		docs\EXAMPLES.md = docs\EXAMPLES.md
+		LICENSE = LICENSE
+		docs\PUBLISHING.md = docs\PUBLISHING.md
+		docs\QUICK_PUBLISH.md = docs\QUICK_PUBLISH.md
+		README.md = README.md
+		docs\RELEASE_SUMMARY.md = docs\RELEASE_SUMMARY.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,5 +64,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{C143CCB7-6849-4344-A479-D5798E7BC959} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{31608749-45FB-4E6E-8F24-FA6DBBCFB08D} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8F4E5C93-1F61-4870-A82D-92B42EE3DBA1}
 	EndGlobalSection
 EndGlobal

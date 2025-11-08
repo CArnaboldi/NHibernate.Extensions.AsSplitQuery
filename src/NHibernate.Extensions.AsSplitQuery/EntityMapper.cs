@@ -55,7 +55,9 @@ internal class EntityMapper
             var propertyColumnNames = persister.GetPropertyColumnNames(propertyName);
             if (propertyColumnNames.Contains(columnName, StringComparer.OrdinalIgnoreCase))
             {
-                return entityType.GetProperty(propertyName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                var property = entityType.GetProperty(propertyName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                if (property != null)
+                    return property;
             }
         }
 

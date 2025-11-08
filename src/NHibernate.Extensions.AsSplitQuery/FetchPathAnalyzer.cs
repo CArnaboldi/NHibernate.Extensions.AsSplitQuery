@@ -122,11 +122,15 @@ internal class FetchPathAnalyzer
             throw new NotSupportedException("AsSplitQuery fetch expression must be a simple property access.");
         }
 
-        private Type _determineParentType(MethodInfo method, bool isThenFetch, FetchPath parentPath)
+        private Type _determineParentType(MethodInfo method, bool isThenFetch, FetchPath? parentPath)
         {
-            return isThenFetch 
-                ? parentPath.ChildEntityType 
-                : method.GetGenericArguments()[0];
+            if (isThenFetch)
+            {
+                if (parentPath == null)
+                    throw new InvalidOperationException("ThenFetch requires a parent path");
+                return parentPath.ChildEntityType;
+            }
+            return method.GetGenericArguments()[0];
         }
 
         private Type _determineChildType(PropertyInfo fetchedProperty)

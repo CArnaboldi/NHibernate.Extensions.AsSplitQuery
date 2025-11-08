@@ -16,28 +16,28 @@ internal class FetchPath
     /// <summary>
     /// The type of the parent entity that contains the collection or reference.
     /// </summary>
-    public Type ParentEntityType { get; set; }
+    public required Type ParentEntityType { get; set; }
 
     /// <summary>
     /// The type of the child entity being fetched.
     /// </summary>
-    public Type ChildEntityType { get; set; }
+    public required Type ChildEntityType { get; set; }
 
     /// <summary>
     /// The property on the parent entity that holds the collection or reference.
     /// </summary>
-    public PropertyInfo CollectionProperty { get; set; }
+    public required PropertyInfo CollectionProperty { get; set; }
 
     /// <summary>
     /// The property on the child entity that references back to the parent (foreign key).
     /// </summary>
-    public PropertyInfo BackReferenceProperty { get; set; }
+    public required PropertyInfo BackReferenceProperty { get; set; }
 
     /// <summary>
     /// The parent fetch path if this is a nested fetch (ThenFetch).
     /// Null for root-level fetches.
     /// </summary>
-    public FetchPath ParentPath { get; set; }
+    public FetchPath? ParentPath { get; set; }
 
     /// <summary>
     /// The depth level of this fetch path in the hierarchy.

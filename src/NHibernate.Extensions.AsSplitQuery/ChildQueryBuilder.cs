@@ -39,7 +39,10 @@ internal class ChildQueryBuilder
     private IQueryable _createBaseQuery(Type childEntityType)
     {
         var queryMethod = ReflectionCache.GetQueryMethod(childEntityType);
-        return (IQueryable)queryMethod.Invoke(_session, null);
+        var result = queryMethod.Invoke(_session, null);
+        if (result == null)
+            throw new InvalidOperationException($"Failed to create query for type {childEntityType.FullName}");
+        return (IQueryable)result;
     }
 
     private IQueryable _applyParentIdFilter(
@@ -61,12 +64,17 @@ internal class ChildQueryBuilder
         ISessionImplementor sessionImpl)
     {
         var parentIdsListType = ReflectionCache.MakeGenericType(typeof(List<>), parentIdProperty.PropertyType);
-        var parentIdsList = (IList)Activator.CreateInstance(parentIdsListType);
+        var parentIdsList = (IList?)Activator.CreateInstance(parentIdsListType);
+        
+        if (parentIdsList == null)
+            throw new InvalidOperationException($"Failed to create list of type {parentIdsListType.FullName}");
 
         foreach (var parent in parentEntities)
         {
             var persister = sessionImpl.GetEntityPersister(parent.GetType().FullName, parent);
-            parentIdsList.Add(persister.GetIdentifier(parent));
+            var identifier = persister.GetIdentifier(parent);
+            if (identifier != null)
+                parentIdsList.Add(identifier);
         }
 
         return parentIdsList;

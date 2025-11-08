@@ -37,7 +37,7 @@ internal class SplitQueryExecutor
     /// <summary>
     /// Executes a query using the split query strategy.
     /// </summary>
-    public object Execute(Expression expression)
+    public object? Execute(Expression expression)
     {
         var allFetchPaths = _fetchPathAnalyzer.ExtractFetchPaths(expression);
         
@@ -47,7 +47,7 @@ internal class SplitQueryExecutor
         var rootExpression = _expressionRewriter.StripFetchOperations(expression);
         var rootResult = _underlyingProvider.Execute(rootExpression);
 
-        if (_isCollection(rootResult))
+        if (rootResult != null && _isCollection(rootResult))
         {
             return _executeSplitQueryForCollection(rootResult, expression, allFetchPaths);
         }
@@ -178,7 +178,10 @@ internal class SplitQueryExecutor
 
     private List<object> _executeChildQuery(IQueryable childQuery)
     {
-        return ((IEnumerable)_underlyingProvider.Execute(childQuery.Expression)).Cast<object>().ToList();
+        var result = _underlyingProvider.Execute(childQuery.Expression);
+        if (result == null)
+            return new List<object>();
+        return ((IEnumerable)result).Cast<object>().ToList();
     }
 
     private void _addChildEntitiesToProcessed(
@@ -207,10 +210,16 @@ internal class SplitQueryExecutor
     private object _createTypedEnumerable(List<object> results, Type elementType)
     {
         var listType = ReflectionCache.MakeGenericType(typeof(List<>), elementType);
-        var typedList = (IList)Activator.CreateInstance(listType);
+        var typedList = (IList?)Activator.CreateInstance(listType);
+        
+        if (typedList == null)
+            throw new InvalidOperationException($"Failed to create list of type {listType.FullName}");
         
         foreach (var item in results)
-            typedList.Add(item);
+        {
+            if (item != null)
+                typedList.Add(item);
+        }
         
         return typedList;
     }

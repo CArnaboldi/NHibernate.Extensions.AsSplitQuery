@@ -41,11 +41,16 @@ internal class SplitQueryProvider : IQueryProvider, INhQueryProvider
     public IQueryable<TElement> CreateQuery<TElement>(Expression expression) 
         => new SplitQueryable<TElement>(this, expression);
     
-    public object Execute(Expression expression) 
+    public object? Execute(Expression expression) 
         => _splitQueryExecutor.Execute(expression);
     
-    public TResult Execute<TResult>(Expression expression) 
-        => (TResult)_splitQueryExecutor.Execute(expression);
+    public TResult Execute<TResult>(Expression expression)
+    {
+        var result = _splitQueryExecutor.Execute(expression);
+        if (result == null)
+            return default!;
+        return (TResult)result;
+    }
 
     public Task<TResult> ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken)
     {
@@ -57,11 +62,13 @@ internal class SplitQueryProvider : IQueryProvider, INhQueryProvider
     public Task<int> ExecuteDmlAsync<T>(QueryMode queryMode, Expression expression, CancellationToken cancellationToken)
         => _underlyingProvider.ExecuteDmlAsync<T>(queryMode, expression, cancellationToken);
 
+#pragma warning disable CS0618 // Type or member is obsolete - Required by INhQueryProvider interface
     public IFutureEnumerable<TResult> ExecuteFuture<TResult>(Expression expression)
         => _underlyingProvider.ExecuteFuture<TResult>(expression);
 
     public IFutureValue<TResult> ExecuteFutureValue<TResult>(Expression expression)
         => _underlyingProvider.ExecuteFutureValue<TResult>(expression);
+#pragma warning restore CS0618
 
     public void SetResultTransformerAndAdditionalCriteria(
         IQuery query,

@@ -64,6 +64,8 @@ internal class CollectionHydrator
             if (backRef == null) continue;
 
             var parentId = parentIdProperty.GetValue(backRef);
+            if (parentId == null) continue;
+            
             if (!grouped.ContainsKey(parentId))
                 grouped[parentId] = new List<object>();
 
@@ -83,6 +85,8 @@ internal class CollectionHydrator
         var parentIdProperty = ReflectionCache.GetIdProperty(path.ParentEntityType, sessionImpl);
         var parentId = parentIdProperty.GetValue(parent);
         
+        if (parentId == null) return;
+        
         var collectionKey = new CollectionKey(collectionPersister, parentId);
         var persistentCollection = _getPersistentCollection(collectionKey, parent, path, sessionImpl);
         
@@ -98,7 +102,7 @@ internal class CollectionHydrator
         }
     }
 
-    private IPersistentCollection _getPersistentCollection(
+    private IPersistentCollection? _getPersistentCollection(
         CollectionKey collectionKey,
         object parent,
         FetchPath path,
@@ -109,7 +113,8 @@ internal class CollectionHydrator
         if (persistentCollection == null)
         {
             var tempCollection = path.CollectionProperty.GetValue(parent);
-            persistentCollection = tempCollection as IPersistentCollection;
+            if (tempCollection != null)
+                persistentCollection = tempCollection as IPersistentCollection;
         }
         
         return persistentCollection;
@@ -136,6 +141,9 @@ internal class CollectionHydrator
     {
         var hashSetType = ReflectionCache.MakeGenericType(typeof(HashSet<>), path.ChildEntityType);
         var newSet = Activator.CreateInstance(hashSetType);
+        
+        if (newSet == null) 
+            throw new InvalidOperationException($"Failed to create HashSet of type {hashSetType.FullName}");
         
         if (childrenByParent.TryGetValue(parentId, out var children))
         {
@@ -227,7 +235,8 @@ internal class CollectionHydrator
             if (backRef != null)
             {
                 var parentId = parentIdProperty.GetValue(backRef);
-                childByParentId[parentId] = child;
+                if (parentId != null)
+                    childByParentId[parentId] = child;
             }
         }
 
@@ -245,7 +254,7 @@ internal class CollectionHydrator
         foreach (var parent in parentEntities)
         {
             var parentId = parentIdProperty.GetValue(parent);
-            if (childByParentId.TryGetValue(parentId, out var child))
+            if (parentId != null && childByParentId.TryGetValue(parentId, out var child))
             {
                 path.CollectionProperty.SetValue(parent, child);
             }

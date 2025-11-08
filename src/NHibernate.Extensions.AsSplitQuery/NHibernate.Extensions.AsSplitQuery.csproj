@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Title>NHibernate.Extensions.AsSplitQuery</Title>
+    <Description>Extension for NHibernate that provides AsSplitQuery functionality similar to Entity Framework Core, preventing cartesian explosion when eager loading multiple collections.</Description>
+    <Authors>CArnaboldi</Authors>
+    <PackageProjectUrl>https://github.com/CArnaboldi/NHibernate.Extensions.AsSplitQuery</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/CArnaboldi/NHibernate.Extensions.AsSplitQuery</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>nhibernate;split-query;linq;orm;performance</PackageTags>
+    <Version>1.0.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NHibernate" Version="5.5.2" />
+  </ItemGroup>
+
+</Project>

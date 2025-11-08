@@ -462,6 +462,7 @@ public class AsSplitQueryIntegrationTests : IDisposable
             var order = await session.Query<TestOrder>()
                 .Where(o => o.Code == "ORD001-MODIFIED")
                 .FetchMany(o => o.Phases)
+                .AsSplitQuery()
                 .FirstAsync();
             
             order.Code.Should().Be("ORD001-MODIFIED");
